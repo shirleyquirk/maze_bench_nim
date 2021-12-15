@@ -2,7 +2,7 @@ import
   seq2d,
   point
 
-proc isReachable*(maze: BoolSeq;start, finish: Point): bool =
+proc isReachable*(maze: Seq2D; start, finish: Point): bool =
   var 
     unvisited = maze
     stack = @[start]
