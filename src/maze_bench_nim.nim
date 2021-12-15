@@ -7,6 +7,7 @@ import
   seq2d,
   point,
   mazesolver
+
 proc main() =
 
   let image = readImage("maze1000.png")
@@ -22,7 +23,6 @@ proc main() =
  
   echo fmt"Transformed image into maze in {getMonoTime() - now}"
 
-  
   const 
     start = (0, 1)
     finish = (2000, 1999)
@@ -38,7 +38,6 @@ proc main() =
   now = getMonoTime()
   var success = maze.isReachable(st_idx, fn_idx)
   let coldTime = getMonoTime() - now
-  echo &"cold:{success}"
   # Warm up
   for _ in 0..1000:
     discard maze.isReachable(st_idx, fn_idx)
