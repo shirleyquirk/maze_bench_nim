@@ -29,7 +29,6 @@ proc main() =
     finish = (2000, 1999).toIdx
 
   echo fmt"Solving maze from ({start.x}, {start.y}) to ({finish.x}, {finish.y}) ..."
-  
   # Test "cold"
   now = getMonoTime()
   var success = maze.isReachable(start, finish)
