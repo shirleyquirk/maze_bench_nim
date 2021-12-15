@@ -6,7 +6,7 @@ type
 proc newBoolSeq*(width,height,length:int):BoolSeq =
   result.width = width
   result.height = height
-  let len = length div 256 + 2
+  let len = length div 256 + 1
   result.data = newSeq[set[uint8]](len)
 
 func `[]`*(b:BoolSeq,idx:int):bool{.inline.} = 
