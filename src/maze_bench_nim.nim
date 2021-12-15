@@ -33,6 +33,7 @@ proc main() =
   now = getMonoTime()
   var success = maze.isReachable(start, finish)
   let coldTime = getMonoTime() - now
+
   # Warm up
   for _ in 0..1000:
     discard maze.isReachable(start, finish)
