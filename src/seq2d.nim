@@ -1,8 +1,23 @@
 import std/[decls,sugar,strformat,sequtils,setutils,bitops,math]
 type
   BoolSeq* = distinct seq[set[uint8]]
-
-func newBoolSeq*(length:int):BoolSeq = (BoolSeq) newSeq[set[uint8]](length div 256 + 2)
+when not defined(nimSeqsV2):
+  type 
+    TGenericSeq {.compilerproc,pure,inheritable.} = object
+      len,reserved: int
+      when defined(gogc):
+        elemSize: int
+        elemAlign: int
+    PGenericSeq = ptr TGenericSeq
+func newBoolSeq*(length:int):BoolSeq = 
+  let len = length div 256 + 2
+  result = (BoolSeq) newSeqOfCap[set[uint8]](len)
+  when defined(nimSeqsV2):
+    cast[ptr int](addr result)[] = len
+  else:
+    var s = cast[PGenericSeq](result)
+    s.len = len
+  #newSeq[set[uint8]](length div 256 + 2)
 func len*(b:BoolSeq):int{.borrow.}
 func `[]`*(b:BoolSeq,idx:int):bool = 
   #doAssert(idx div 256 < b.len,&"nope: {b.len=}")
@@ -19,7 +34,7 @@ func `[]=`*(b:var BoolSeq,idx:int,val:static bool) =
     (seq[set[uint8]])(b)[idx div 256].excl (idx mod 256).uint8
 
 
-proc initSeq2D*(width,height: int): BoolSeq = newBoolSeq(width * height)
+template initSeq2D*(width,height: int): BoolSeq = newBoolSeq(width * height)
 
 #func `[]=`*(b:var BoolSeq,x,y:int,val:bool) = b[x+b.width*y]=val
 #[

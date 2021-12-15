@@ -14,5 +14,5 @@ requires "nim >= 1.6.0"
 requires "pixie >= 3.0.4"
 
 task benchmark, "Runs the benchmark":
-  exec "nim r -d:danger --opt:speed -d:boolseq --cc:env --gc:arc src/maze_bench_nim.nim"
+  exec "nim r -d:danger --opt:speed --passC:-flto --passL:-flto --cc:env --gc:arc src/maze_bench_nim.nim"
 
