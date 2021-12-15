@@ -1,6 +1,8 @@
 import std/[decls,sugar,strformat,sequtils,setutils,bitops,math]
 type
-  BoolSeq* = distinct seq[set[uint8]]
+  BoolSeq*{.union.} = object
+    data:seq[set[uint8]]
+    fata:seq[array[4,uint64]]
 when not defined(nimSeqsV2):
   type 
     TGenericSeq {.compilerproc,pure,inheritable.} = object
@@ -11,27 +13,29 @@ when not defined(nimSeqsV2):
     PGenericSeq = ptr TGenericSeq
 func newBoolSeq*(length:int):BoolSeq = 
   let len = length div 256 + 2
-  result = (BoolSeq) newSeqOfCap[set[uint8]](len)
+  result.data = newSeqOfCap[set[uint8]](len)
   when defined(nimSeqsV2):
-    cast[ptr int](addr result)[] = len
+    cast[ptr int](addr result.data)[] = len
   else:
-    var s = cast[PGenericSeq](result)
+    var s = cast[PGenericSeq](result.data)
     s.len = len
   #newSeq[set[uint8]](length div 256 + 2)
-func len*(b:BoolSeq):int{.borrow.}
-func `[]`*(b:BoolSeq,idx:int):bool = 
+
+func len*(b:BoolSeq):int{.inline.} = b.data.len
+
+func `[]`*(b:BoolSeq,idx:int):bool{.inline.} = 
   #doAssert(idx div 256 < b.len,&"nope: {b.len=}")
-  (idx mod 256).uint8 in (seq[set[uint8]])(b)[idx div 256]
-func `[]=`*(b:var BoolSeq,idx:int,val:bool) =
+  (idx mod 256).uint8 in b.data[idx div 256]
+func `[]=`*(b:var BoolSeq,idx:int,val:bool){.inline.} =
   if val:
-    (seq[set[uint8]])(b)[idx div 256].incl (idx mod 256).uint8
+    b.data[idx div 256].incl (idx mod 256).uint8
   else:
-    (seq[set[uint8]])(b)[idx div 256].excl (idx mod 256).uint8
-func `[]=`*(b:var BoolSeq,idx:int,val:static bool) =
+    b.data[idx div 256].excl (idx mod 256).uint8
+func `[]=`*(b:var BoolSeq,idx:int,val:static bool){.inline.} =
   when val:
-    (seq[set[uint8]])(b)[idx div 256].incl (idx mod 256).uint8
+    b.data[idx div 256].incl (idx mod 256).uint8
   else:
-    (seq[set[uint8]])(b)[idx div 256].excl (idx mod 256).uint8
+    b.data[idx div 256].excl (idx mod 256).uint8
 
 
 template initSeq2D*(width,height: int): BoolSeq = newBoolSeq(width * height)
