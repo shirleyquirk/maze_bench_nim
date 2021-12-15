@@ -16,7 +16,7 @@ proc main() =
 
   var 
     now = getMonoTime()
-    maze = initSeq2D(image.width, image.height)
+    maze = newSeq2D(image.width, image.height)
   
   for i, rgba in image.data:
     maze[i] = (rgba.r + rgba.g + rgba.b) > 0

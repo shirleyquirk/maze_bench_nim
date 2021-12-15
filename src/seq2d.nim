@@ -28,4 +28,4 @@ func `[]=`*(b:var Seq2D,idx:int,val:static bool){.inline.} =
     b.data[idx div 256].excl (idx mod 256).uint8
 
 
-template initSeq2D*(width,height: int): Seq2D = newBoolSeq(width,height,width * height)
+template newSeq2D*(width,height: int): Seq2D = newBoolSeq(width,height,width * height)
