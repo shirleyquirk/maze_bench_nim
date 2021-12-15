@@ -13,6 +13,7 @@ proc main() =
   echo fmt"Loaded image: {image.width} x {image.height}"
 
   echo "Transforming image into maze..."
+
   var 
     now = getMonoTime()
     maze = initSeq2D(image.width, image.height)
