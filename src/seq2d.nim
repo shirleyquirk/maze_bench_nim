@@ -1,8 +1,5 @@
 import std/[decls,sugar,strformat,sequtils,setutils,bitops,math]
-type
-  BoolSeq*{.union.} = object
-    data:seq[set[uint8]]
-    fata:seq[array[4,uint64]]
+
 when not defined(nimSeqsV2):
   type 
     TGenericSeq {.compilerproc,pure,inheritable.} = object
@@ -11,6 +8,20 @@ when not defined(nimSeqsV2):
         elemSize: int
         elemAlign: int
     PGenericSeq = ptr TGenericSeq
+    SeqUint64 = object of TGenericSeq
+      data:ptr UncheckedArray[uint64]
+else:
+  type
+    SeqUint64Content = object
+      cap:int
+      data:UncheckedArray[uint64]
+    SeqUint64 = object
+      len:int
+      data: ptr SeqUint64Content
+type
+  BoolSeq*{.union.} = object
+    data:seq[set[uint8]]
+    fata:SeqUint64
 func newBoolSeq*(length:int):BoolSeq = 
   let len = length div 256 + 2
   result.data = newSeqOfCap[set[uint8]](len)
@@ -26,11 +37,36 @@ func len*(b:BoolSeq):int{.inline.} = b.data.len
 func `[]`*(b:BoolSeq,idx:int):bool{.inline.} = 
   #doAssert(idx div 256 < b.len,&"nope: {b.len=}")
   (idx mod 256).uint8 in b.data[idx div 256]
+
 func `[]=`*(b:var BoolSeq,idx:int,val:bool){.inline.} =
+  #template incl(x:array[4,uint64],y:uint)
+  let
+    x = idx div 256
+    y = (uint8) (idx mod 256) # idx and 0xff
+  #{.emit:"""NU v = (*b).data.p->data[x][(NU)(y)>>3];""".}
+    #yshr = y shr 3
+    #yand = y and 0x7
+    #bitval = cast[uint64](val)
+    #v = b.fata[x][yshr]
+  #b.fata[x][yshr] = (v and not(1'u64 shl yand)) or (bitval shl yand)
+  #{.emit:"""(*b).data.p->data[x][(NU)(y)>>3] &= ~(1U<<(y&7U));""".}
+  #{.emit:"""(*b).data.p->data[x][(NU)(y)>>3] |= (val << (y&7U));""".}
   if val:
-    b.data[idx div 256].incl (idx mod 256).uint8
+    b.data[x].incl y
+  #  {.emit:"""(*b).data.p->data[x][(NU)(y)>>3] |= (1U<<(y&7U));//ha""".}
+    #b.fata[x][y shr 3] = b.fata[x][y shr 3] or (1'u64 shl (y and 0x7'u64))
+    #b.fata[x][y>>3] |=(1'uint shl (y and 0x7'u))
+    #$1[(NU)($2)>>3] |=(1U<<($2&7U));$n
   else:
-    b.data[idx div 256].excl (idx mod 256).uint8
+    b.data[x].excl y
+    #$1[(NU){$2}>>3] &= ~(1U<<($2&7U));$n
+#func set(b:var BoolSeq,idx:int,val:bool){.inline.} = 
+#  b.fata[x][]
+#template `[]=`*(b:var BoolSeq,idx:int,cond:untyped):untyped = 
+#  if cond:
+#    b.data[idx div 256].incl (idx mod 256).uint8
+#  else:
+#    b.data[idx div 256].excl (idx mod 256).uint8
 func `[]=`*(b:var BoolSeq,idx:int,val:static bool){.inline.} =
   when val:
     b.data[idx div 256].incl (idx mod 256).uint8
